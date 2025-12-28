@@ -24,13 +24,13 @@ ProjectManager="*res://src/autoloads/project_manager.gd"
 AssetRegistry="*res://src/autoloads/asset_registry.gd"
 ThumbnailCache="*res://src/autoloads/thumbnail_cache.gd"
 
-[gui]
-
-theme/custom="res://resources/themes/default_dark.tres"
-
 [editor_plugins]
 
 enabled=PackedStringArray("res://addons/fontawesome/plugin.cfg", "res://addons/godot-sqlite/plugin.cfg")
+
+[gui]
+
+theme/custom="res://resources/themes/default_dark.tres"
 
 [rendering]
 

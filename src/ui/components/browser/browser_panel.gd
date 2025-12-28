@@ -8,6 +8,7 @@ extends VBoxContainer
 @onready var filter_dropdown: OptionButton = %FilterDropdown
 @onready var search_box: LineEdit = %SearchBox
 @onready var status_label: Label = %StatusLabel
+@onready var empty_state: CenterContainer = %EmptyState
 @onready var asset_grid: GridContainer = %AssetGrid
 
 var _current_folder: String = ""
@@ -104,6 +105,11 @@ func _scan_folder(path: String) -> void:
 
 func _display_assets(assets: Array[AssetMeta]) -> void:
 	_clear_grid()
+
+	# Show/hide empty state
+	var show_empty := assets.is_empty() and _current_folder.is_empty()
+	empty_state.visible = show_empty
+	asset_grid.get_parent().visible = not show_empty
 
 	for asset in assets:
 		var item := _create_grid_item(asset)

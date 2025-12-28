@@ -52,42 +52,29 @@ text = "No preview available"
 horizontal_alignment = 1
 
 [node name="MetadataBar" type="HBoxContainer" parent="VSplitContainer"]
+unique_name_in_owner = true
 layout_mode = 2
-custom_minimum_size = Vector2(0, 50)
+custom_minimum_size = Vector2(0, 32)
 
-[node name="TagsLabel" type="Label" parent="VSplitContainer/MetadataBar"]
+[node name="FileInfoLabel" type="Label" parent="VSplitContainer/MetadataBar"]
+unique_name_in_owner = true
 layout_mode = 2
-text = "Tags:"
+size_flags_horizontal = 3
+text = "No file selected"
 
 [node name="TagsContainer" type="HBoxContainer" parent="VSplitContainer/MetadataBar"]
 unique_name_in_owner = true
-layout_mode = 2
-
-[node name="VSeparator" type="VSeparator" parent="VSplitContainer/MetadataBar"]
 layout_mode = 2
 
 [node name="FavoriteButton" type="Button" parent="VSplitContainer/MetadataBar"]
 unique_name_in_owner = true
 layout_mode = 2
 toggle_mode = true
-text = "Favorite"
-
-[node name="VSeparator2" type="VSeparator" parent="VSplitContainer/MetadataBar"]
-layout_mode = 2
-
-[node name="NotesLabel" type="Label" parent="VSplitContainer/MetadataBar"]
-layout_mode = 2
-text = "Notes:"
+text = "★"
+flat = true
 
 [node name="NotesEdit" type="LineEdit" parent="VSplitContainer/MetadataBar"]
 unique_name_in_owner = true
 layout_mode = 2
-size_flags_horizontal = 3
-
-[node name="VSeparator3" type="VSeparator" parent="VSplitContainer/MetadataBar"]
-layout_mode = 2
-
-[node name="FileInfoLabel" type="Label" parent="VSplitContainer/MetadataBar"]
-unique_name_in_owner = true
-layout_mode = 2
-text = "No file selected"
+custom_minimum_size = Vector2(150, 0)
+placeholder_text = "Add notes..."

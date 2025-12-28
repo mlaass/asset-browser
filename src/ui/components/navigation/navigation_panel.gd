@@ -1,7 +1,8 @@
 extends PanelContainer
 
-## Navigation panel with quick access, file tree, and tag palette.
+## Navigation panel with project selector, quick access, file tree, and tag palette.
 
+@onready var project_dropdown: OptionButton = %ProjectDropdown
 @onready var add_folder_button: Button = %AddFolderButton
 @onready var watched_folders_list: VBoxContainer = %WatchedFoldersList
 @onready var file_tree: Tree = %FileTree
@@ -10,23 +11,56 @@ extends PanelContainer
 @onready var add_folder_dialog: FileDialog = %AddFolderDialog
 
 var _tree_root: TreeItem
+var _projects: Array = []
 
 
 func _ready() -> void:
+	project_dropdown.item_selected.connect(_on_project_selected)
 	add_folder_button.pressed.connect(_on_add_folder_pressed)
 	add_folder_dialog.dir_selected.connect(_on_folder_selected)
 	add_tag_button.pressed.connect(_on_add_tag_pressed)
 	file_tree.item_activated.connect(_on_file_tree_activated)
 
 	EventBus.project_changed.connect(_on_project_changed)
+	EventBus.project_created.connect(_on_project_list_changed)
+	EventBus.project_deleted.connect(_on_project_list_changed)
 	EventBus.watched_folder_added.connect(_on_watched_folder_added)
 	EventBus.watched_folder_removed.connect(_on_watched_folder_removed)
 	EventBus.tag_created.connect(_on_tag_created)
 	EventBus.tag_deleted.connect(_on_tag_deleted)
 
+	_refresh_projects()
 	_setup_file_tree()
 	_refresh_watched_folders()
 	_refresh_tags()
+
+
+func _refresh_projects() -> void:
+	project_dropdown.clear()
+	_projects = ProjectManager.get_all_projects()
+
+	var current_idx := 0
+	for i in range(_projects.size()):
+		var project = _projects[i]
+		project_dropdown.add_item(project.name, project.id)
+		if ProjectManager.current_project and project.id == ProjectManager.current_project.id:
+			current_idx = i
+
+	if not _projects.is_empty():
+		project_dropdown.select(current_idx)
+
+
+func _on_project_selected(index: int) -> void:
+	if index < 0 or index >= _projects.size():
+		return
+
+	var project = _projects[index]
+	if ProjectManager.current_project == null or project.id != ProjectManager.current_project.id:
+		ProjectManager.switch_project(project.id)
+
+
+func _on_project_list_changed(_arg = null) -> void:
+	_refresh_projects()
 
 
 func _setup_file_tree() -> void:
@@ -34,7 +68,8 @@ func _setup_file_tree() -> void:
 	_tree_root = file_tree.create_item()
 
 	# Add root folders
-	_add_tree_folder(_tree_root, OS.get_environment("HOME"), "Home")
+	var home_item := _add_tree_folder(_tree_root, OS.get_environment("HOME"), "Home")
+	home_item.collapsed = true  # Start collapsed to hide "Loading..." placeholder
 
 
 func _add_tree_folder(parent: TreeItem, path: String, display_name: String = "") -> TreeItem:
@@ -95,8 +130,9 @@ func _refresh_watched_folders() -> void:
 
 	if folders.is_empty():
 		var label := Label.new()
-		label.text = "No watched folders"
-		label.add_theme_color_override("font_color", Color(0.5, 0.5, 0.5))
+		label.text = "Click + to add a folder"
+		label.add_theme_color_override("font_color", Color(0.6, 0.6, 0.6))
+		label.add_theme_font_size_override("font_size", 12)
 		watched_folders_list.add_child(label)
 
 
@@ -133,8 +169,9 @@ func _refresh_tags() -> void:
 
 	if tags.is_empty():
 		var label := Label.new()
-		label.text = "No tags"
-		label.add_theme_color_override("font_color", Color(0.5, 0.5, 0.5))
+		label.text = "Click + to create a tag"
+		label.add_theme_color_override("font_color", Color(0.6, 0.6, 0.6))
+		label.add_theme_font_size_override("font_size", 12)
 		tag_list.add_child(label)
 
 
@@ -207,6 +244,7 @@ func _on_file_tree_activated() -> void:
 
 
 func _on_project_changed(_project) -> void:
+	_refresh_projects()
 	_refresh_watched_folders()
 	_refresh_tags()
 

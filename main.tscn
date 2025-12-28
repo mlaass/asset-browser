@@ -1,8 +1,7 @@
-[gd_scene load_steps=7 format=3 uid="uid://dxr2uvc5dybgn"]
+[gd_scene load_steps=6 format=3 uid="uid://dxr2uvc5dybgn"]
 
 [ext_resource type="Script" path="res://main.gd" id="1_main"]
 [ext_resource type="PackedScene" uid="uid://cmenubar" path="res://src/ui/components/menu/menu_bar.tscn" id="2_menubar"]
-[ext_resource type="PackedScene" uid="uid://c3header" path="res://src/ui/components/header/header.tscn" id="3_header"]
 [ext_resource type="PackedScene" uid="uid://c3navigation" path="res://src/ui/components/navigation/navigation_panel.tscn" id="4_navigation"]
 [ext_resource type="PackedScene" uid="uid://c3browser" path="res://src/ui/components/browser/browser_panel.tscn" id="5_browser"]
 [ext_resource type="PackedScene" uid="uid://c3preview" path="res://src/ui/components/preview/preview_panel.tscn" id="6_preview"]
@@ -27,9 +26,6 @@ grow_vertical = 2
 [node name="MenuBar" parent="VBoxContainer" instance=ExtResource("2_menubar")]
 layout_mode = 2
 
-[node name="Header" parent="VBoxContainer" instance=ExtResource("3_header")]
-layout_mode = 2
-
 [node name="HSplitContainer" type="HSplitContainer" parent="VBoxContainer"]
 layout_mode = 2
 size_flags_vertical = 3
@@ -50,4 +46,4 @@ size_flags_vertical = 3
 
 [node name="PreviewPanel" parent="VBoxContainer/HSplitContainer/VSplitContainer" instance=ExtResource("6_preview")]
 layout_mode = 2
-custom_minimum_size = Vector2(0, 200)
+custom_minimum_size = Vector2(0, 150)

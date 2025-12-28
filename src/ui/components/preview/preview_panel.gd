@@ -4,6 +4,7 @@ extends PanelContainer
 
 @onready var image_preview: TextureRect = %ImagePreview
 @onready var no_preview_label: Label = %NoPreviewLabel
+@onready var metadata_bar: HBoxContainer = %MetadataBar
 @onready var tags_container: HBoxContainer = %TagsContainer
 @onready var favorite_button: Button = %FavoriteButton
 @onready var notes_edit: LineEdit = %NotesEdit
