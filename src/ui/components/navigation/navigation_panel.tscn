@@ -1,0 +1,79 @@
+[gd_scene load_steps=2 format=3 uid="uid://c3navigation"]
+
+[ext_resource type="Script" path="res://src/ui/components/navigation/navigation_panel.gd" id="1_navigation"]
+
+[node name="NavigationPanel" type="PanelContainer"]
+script = ExtResource("1_navigation")
+
+[node name="VBoxContainer" type="VBoxContainer" parent="."]
+layout_mode = 2
+
+[node name="QuickAccessSection" type="VBoxContainer" parent="VBoxContainer"]
+layout_mode = 2
+
+[node name="QuickAccessHeader" type="HBoxContainer" parent="VBoxContainer/QuickAccessSection"]
+layout_mode = 2
+
+[node name="Label" type="Label" parent="VBoxContainer/QuickAccessSection/QuickAccessHeader"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "Quick Access"
+
+[node name="AddFolderButton" type="Button" parent="VBoxContainer/QuickAccessSection/QuickAccessHeader"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "+"
+flat = true
+
+[node name="WatchedFoldersList" type="VBoxContainer" parent="VBoxContainer/QuickAccessSection"]
+unique_name_in_owner = true
+layout_mode = 2
+
+[node name="HSeparator" type="HSeparator" parent="VBoxContainer"]
+layout_mode = 2
+
+[node name="FileTreeSection" type="VBoxContainer" parent="VBoxContainer"]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="Label" type="Label" parent="VBoxContainer/FileTreeSection"]
+layout_mode = 2
+text = "File Tree"
+
+[node name="FileTree" type="Tree" parent="VBoxContainer/FileTreeSection"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_vertical = 3
+hide_root = true
+
+[node name="HSeparator2" type="HSeparator" parent="VBoxContainer"]
+layout_mode = 2
+
+[node name="TagPaletteSection" type="VBoxContainer" parent="VBoxContainer"]
+layout_mode = 2
+
+[node name="TagPaletteHeader" type="HBoxContainer" parent="VBoxContainer/TagPaletteSection"]
+layout_mode = 2
+
+[node name="Label" type="Label" parent="VBoxContainer/TagPaletteSection/TagPaletteHeader"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "Tags"
+
+[node name="AddTagButton" type="Button" parent="VBoxContainer/TagPaletteSection/TagPaletteHeader"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "+"
+flat = true
+
+[node name="TagList" type="VBoxContainer" parent="VBoxContainer/TagPaletteSection"]
+unique_name_in_owner = true
+layout_mode = 2
+
+[node name="AddFolderDialog" type="FileDialog" parent="."]
+unique_name_in_owner = true
+title = "Select Folder to Watch"
+size = Vector2i(600, 400)
+ok_button_text = "Select"
+file_mode = 2
+access = 2

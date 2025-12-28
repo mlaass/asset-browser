@@ -11,8 +11,22 @@ config_version=5
 [application]
 
 config/name="AssetBrowser"
+run/main_scene="res://main.tscn"
 config/features=PackedStringArray("4.5", "GL Compatibility")
 config/icon="res://icon.svg"
+
+[autoload]
+
+AppConfig="*res://src/autoloads/app_config.gd"
+EventBus="*res://src/autoloads/event_bus.gd"
+Database="*res://src/autoloads/database.gd"
+ProjectManager="*res://src/autoloads/project_manager.gd"
+AssetRegistry="*res://src/autoloads/asset_registry.gd"
+ThumbnailCache="*res://src/autoloads/thumbnail_cache.gd"
+
+[gui]
+
+theme/custom="res://resources/themes/default_dark.tres"
 
 [editor_plugins]
 

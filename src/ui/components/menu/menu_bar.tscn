@@ -1,0 +1,21 @@
+[gd_scene load_steps=2 format=3 uid="uid://cmenubar"]
+
+[ext_resource type="Script" path="res://src/ui/components/menu/menu_bar.gd" id="1_menu"]
+
+[node name="MenuBar" type="MenuBar"]
+script = ExtResource("1_menu")
+
+[node name="File" type="PopupMenu" parent="."]
+name = "File"
+
+[node name="Edit" type="PopupMenu" parent="."]
+name = "Edit"
+
+[node name="View" type="PopupMenu" parent="."]
+name = "View"
+
+[node name="Project" type="PopupMenu" parent="."]
+name = "Project"
+
+[node name="Help" type="PopupMenu" parent="."]
+name = "Help"
