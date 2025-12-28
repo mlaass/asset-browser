@@ -72,3 +72,15 @@ Use `Thread` or `WorkerThreadPool` for:
 - Folder indexing: > 1000 files/second
 - UI responsiveness: < 16ms frame time during scrolling
 - Preview load: < 500ms for any supported file
+
+## UI Development Workflow
+
+When working on UI layout and design, use screenshots to review and critique the visual output:
+
+```bash
+godot45 --path . -- --screenshot
+```
+
+This launches the app, takes a timestamped screenshot to `screenshots/screenshot_YYYYMMDD_HHMMSS.png`, and exits automatically. Then read the latest screenshot to visually inspect the layout, critique spacing/alignment/sizing, make adjustments, and repeat.
+
+Manual screenshots can also be taken by pressing **F12** while the app is running.
