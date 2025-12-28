@@ -12,6 +12,7 @@ extends PanelContainer
 
 var _tree_root: TreeItem
 var _projects: Array = []
+var _selected_tags: Array[Tag] = []
 
 
 func _ready() -> void:
@@ -186,9 +187,11 @@ func _add_tag_item(tag: Tag) -> void:
 	var button := Button.new()
 	button.text = tag.name
 	button.flat = true
+	button.toggle_mode = true
 	button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	button.alignment = HORIZONTAL_ALIGNMENT_LEFT
-	button.pressed.connect(_on_tag_clicked.bind(tag))
+	button.set_meta("tag", tag)
+	button.toggled.connect(_on_tag_toggled.bind(tag, button))
 	hbox.add_child(button)
 
 	tag_list.add_child(hbox)
@@ -220,8 +223,24 @@ func _on_add_tag_pressed() -> void:
 	ProjectManager.create_tag(tag_name, color)
 
 
-func _on_tag_clicked(tag: Tag) -> void:
-	EventBus.tag_filter_changed.emit([tag])
+func _on_tag_toggled(pressed: bool, tag: Tag, _button: Button) -> void:
+	if pressed:
+		# Add tag to selection if not already present
+		var found := false
+		for t in _selected_tags:
+			if t.id == tag.id:
+				found = true
+				break
+		if not found:
+			_selected_tags.append(tag)
+	else:
+		# Remove tag from selection
+		for i in range(_selected_tags.size() - 1, -1, -1):
+			if _selected_tags[i].id == tag.id:
+				_selected_tags.remove_at(i)
+				break
+
+	EventBus.tag_filter_changed.emit(_selected_tags.duplicate())
 
 
 func _on_file_tree_activated() -> void:
@@ -246,6 +265,7 @@ func _on_file_tree_activated() -> void:
 func _on_project_changed(_project) -> void:
 	_refresh_projects()
 	_refresh_watched_folders()
+	_selected_tags.clear()
 	_refresh_tags()
 
 

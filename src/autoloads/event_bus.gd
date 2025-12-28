@@ -46,3 +46,8 @@ signal preview_requested(asset)
 signal view_mode_changed(mode: String)  # "grid" or "list"
 signal sort_changed(field: String, ascending: bool)
 signal search_changed(query: String)
+signal panel_visibility_changed(panel_name: String, visible: bool)
+signal refresh_requested()
+signal select_all_requested()
+signal deselect_all_requested()
+signal settings_changed()

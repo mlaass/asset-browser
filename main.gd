@@ -4,6 +4,9 @@ extends Control
 
 const SCREENSHOT_DIR := "res://screenshots"
 
+@onready var navigation_panel: PanelContainer = $VBoxContainer/HSplitContainer/NavigationPanel
+@onready var preview_panel: PanelContainer = $VBoxContainer/HSplitContainer/VSplitContainer/PreviewPanel
+
 
 func _ready() -> void:
   # Wait for autoloads to initialize
@@ -14,6 +17,9 @@ func _ready() -> void:
   print("  Data path: ", AppConfig.get_data_path())
   print("  Database: ", "Connected" if Database.is_open() else "FAILED")
   print("  Project: ", ProjectManager.current_project.name if ProjectManager.current_project else "None")
+
+  # Connect to UI events
+  EventBus.panel_visibility_changed.connect(_on_panel_visibility_changed)
 
   # Check for --screenshot command line argument
   var args := OS.get_cmdline_args() + OS.get_cmdline_user_args()
@@ -57,3 +63,11 @@ func _take_screenshot() -> void:
     print("Screenshot saved: ", path)
   else:
     print("Screenshot failed: ", error)
+
+
+func _on_panel_visibility_changed(panel_name: String, visible: bool) -> void:
+  match panel_name:
+    "navigation":
+      navigation_panel.visible = visible
+    "preview":
+      preview_panel.visible = visible

@@ -1,0 +1,176 @@
+[gd_scene load_steps=2 format=3 uid="uid://c20o3pynx611k"]
+
+[ext_resource type="Script" path="res://src/ui/dialogs/settings_dialog.gd" id="1_settings"]
+
+[node name="SettingsDialog" type="Window"]
+title = "Settings"
+initial_position = 2
+size = Vector2i(450, 400)
+min_size = Vector2i(400, 350)
+script = ExtResource("1_settings")
+
+[node name="MarginContainer" type="MarginContainer" parent="."]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 12.0
+offset_top = 12.0
+offset_right = -12.0
+offset_bottom = -12.0
+
+[node name="VBoxContainer" type="VBoxContainer" parent="MarginContainer"]
+layout_mode = 2
+
+[node name="TabContainer" type="TabContainer" parent="MarginContainer/VBoxContainer"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="General" type="MarginContainer" parent="MarginContainer/VBoxContainer/TabContainer"]
+layout_mode = 2
+theme_override_constants/margin_left = 12
+theme_override_constants/margin_top = 12
+theme_override_constants/margin_right = 12
+theme_override_constants/margin_bottom = 12
+
+[node name="VBox" type="VBoxContainer" parent="MarginContainer/VBoxContainer/TabContainer/General"]
+layout_mode = 2
+
+[node name="ShowHiddenCheck" type="CheckBox" parent="MarginContainer/VBoxContainer/TabContainer/General/VBox"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Show hidden files"
+
+[node name="ConfirmDeleteCheck" type="CheckBox" parent="MarginContainer/VBoxContainer/TabContainer/General/VBox"]
+unique_name_in_owner = true
+layout_mode = 2
+button_pressed = true
+text = "Confirm before delete"
+
+[node name="Appearance" type="MarginContainer" parent="MarginContainer/VBoxContainer/TabContainer"]
+visible = false
+layout_mode = 2
+theme_override_constants/margin_left = 12
+theme_override_constants/margin_top = 12
+theme_override_constants/margin_right = 12
+theme_override_constants/margin_bottom = 12
+
+[node name="VBox" type="VBoxContainer" parent="MarginContainer/VBoxContainer/TabContainer/Appearance"]
+layout_mode = 2
+
+[node name="AccentColorRow" type="HBoxContainer" parent="MarginContainer/VBoxContainer/TabContainer/Appearance/VBox"]
+layout_mode = 2
+
+[node name="Label" type="Label" parent="MarginContainer/VBoxContainer/TabContainer/Appearance/VBox/AccentColorRow"]
+layout_mode = 2
+text = "Accent color:"
+
+[node name="AccentColorPicker" type="ColorPickerButton" parent="MarginContainer/VBoxContainer/TabContainer/Appearance/VBox/AccentColorRow"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(100, 0)
+layout_mode = 2
+color = Color(0.203922, 0.596078, 0.858824, 1)
+edit_alpha = false
+
+[node name="Spacer" type="Control" parent="MarginContainer/VBoxContainer/TabContainer/Appearance/VBox/AccentColorRow"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="FontSizeRow" type="HBoxContainer" parent="MarginContainer/VBoxContainer/TabContainer/Appearance/VBox"]
+layout_mode = 2
+
+[node name="Label" type="Label" parent="MarginContainer/VBoxContainer/TabContainer/Appearance/VBox/FontSizeRow"]
+layout_mode = 2
+text = "Font size:"
+
+[node name="FontSizeSlider" type="HSlider" parent="MarginContainer/VBoxContainer/TabContainer/Appearance/VBox/FontSizeRow"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(150, 0)
+layout_mode = 2
+min_value = 10.0
+max_value = 20.0
+step = 1.0
+value = 14.0
+
+[node name="FontSizeLabel" type="Label" parent="MarginContainer/VBoxContainer/TabContainer/Appearance/VBox/FontSizeRow"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(50, 0)
+layout_mode = 2
+text = "14 px"
+
+[node name="Spacer" type="Control" parent="MarginContainer/VBoxContainer/TabContainer/Appearance/VBox/FontSizeRow"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="Cache" type="MarginContainer" parent="MarginContainer/VBoxContainer/TabContainer"]
+visible = false
+layout_mode = 2
+theme_override_constants/margin_left = 12
+theme_override_constants/margin_top = 12
+theme_override_constants/margin_right = 12
+theme_override_constants/margin_bottom = 12
+
+[node name="VBox" type="VBoxContainer" parent="MarginContainer/VBoxContainer/TabContainer/Cache"]
+layout_mode = 2
+
+[node name="CacheSizeLabel" type="Label" parent="MarginContainer/VBoxContainer/TabContainer/Cache/VBox"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Cache size: 0 B"
+
+[node name="CacheCountLabel" type="Label" parent="MarginContainer/VBoxContainer/TabContainer/Cache/VBox"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "0 cached thumbnails"
+
+[node name="HSeparator" type="HSeparator" parent="MarginContainer/VBoxContainer/TabContainer/Cache/VBox"]
+layout_mode = 2
+
+[node name="ThumbnailSizeRow" type="HBoxContainer" parent="MarginContainer/VBoxContainer/TabContainer/Cache/VBox"]
+layout_mode = 2
+
+[node name="Label" type="Label" parent="MarginContainer/VBoxContainer/TabContainer/Cache/VBox/ThumbnailSizeRow"]
+layout_mode = 2
+text = "Thumbnail size:"
+
+[node name="ThumbnailSizeSlider" type="HSlider" parent="MarginContainer/VBoxContainer/TabContainer/Cache/VBox/ThumbnailSizeRow"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(150, 0)
+layout_mode = 2
+min_value = 64.0
+max_value = 200.0
+step = 8.0
+value = 100.0
+
+[node name="ThumbnailSizeLabel" type="Label" parent="MarginContainer/VBoxContainer/TabContainer/Cache/VBox/ThumbnailSizeRow"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(50, 0)
+layout_mode = 2
+text = "100 px"
+
+[node name="Spacer" type="Control" parent="MarginContainer/VBoxContainer/TabContainer/Cache/VBox/ThumbnailSizeRow"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="ClearCacheButton" type="Button" parent="MarginContainer/VBoxContainer/TabContainer/Cache/VBox"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 0
+text = "Clear Cache"
+
+[node name="HSeparator" type="HSeparator" parent="MarginContainer/VBoxContainer"]
+layout_mode = 2
+
+[node name="ButtonRow" type="HBoxContainer" parent="MarginContainer/VBoxContainer"]
+layout_mode = 2
+alignment = 2
+
+[node name="CancelButton" type="Button" parent="MarginContainer/VBoxContainer/ButtonRow"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Cancel"
+
+[node name="SaveButton" type="Button" parent="MarginContainer/VBoxContainer/ButtonRow"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Save"

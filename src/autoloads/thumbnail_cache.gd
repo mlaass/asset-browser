@@ -119,9 +119,73 @@ func preload_thumbnails(assets: Array) -> void:
 
 
 ## Clears the memory cache.
-func clear_cache() -> void:
+func clear_memory_cache() -> void:
 	_cache.clear()
 	_lru.clear()
+
+
+## Clears the disk cache (thumbnails folder).
+func clear_disk_cache() -> void:
+	var thumbnail_path := AppConfig.get_thumbnail_path()
+	var dir := DirAccess.open(thumbnail_path)
+	if dir == null:
+		return
+
+	dir.list_dir_begin()
+	var file_name := dir.get_next()
+	while file_name != "":
+		if not dir.current_is_dir() and file_name.ends_with(".png"):
+			dir.remove(file_name)
+		file_name = dir.get_next()
+	dir.list_dir_end()
+
+
+## Clears both memory and disk cache.
+func clear_all_cache() -> void:
+	clear_memory_cache()
+	clear_disk_cache()
+
+
+## Gets the disk cache size in bytes.
+func get_disk_cache_size() -> int:
+	var thumbnail_path := AppConfig.get_thumbnail_path()
+	var dir := DirAccess.open(thumbnail_path)
+	if dir == null:
+		return 0
+
+	var total_size := 0
+	dir.list_dir_begin()
+	var file_name := dir.get_next()
+	while file_name != "":
+		if not dir.current_is_dir() and file_name.ends_with(".png"):
+			var file_path := thumbnail_path.path_join(file_name)
+			var file := FileAccess.open(file_path, FileAccess.READ)
+			if file:
+				total_size += file.get_length()
+				file.close()
+		file_name = dir.get_next()
+	dir.list_dir_end()
+
+	return total_size
+
+
+## Gets the disk cache file count.
+func get_disk_cache_count() -> int:
+	var thumbnail_path := AppConfig.get_thumbnail_path()
+	var dir := DirAccess.open(thumbnail_path)
+	if dir == null:
+		return 0
+
+	var count := 0
+	dir.list_dir_begin()
+	var file_name := dir.get_next()
+	while file_name != "":
+		if not dir.current_is_dir() and file_name.ends_with(".png"):
+			count += 1
+		file_name = dir.get_next()
+	dir.list_dir_end()
+
+	return count
 
 
 ## Clears pending generation requests.

@@ -2,6 +2,12 @@ extends VBoxContainer
 
 ## Browser panel with toolbar and asset grid.
 
+const TYPE_EXTENSIONS := {
+	"Images": ["png", "jpg", "jpeg", "webp", "svg", "tga", "bmp"],
+	"Audio": ["wav", "mp3", "ogg", "flac", "aiff"],
+	"3D Models": ["gltf", "glb", "obj", "fbx", "dae"],
+}
+
 @onready var grid_view_button: Button = %GridViewButton
 @onready var list_view_button: Button = %ListViewButton
 @onready var sort_dropdown: OptionButton = %SortDropdown
@@ -10,11 +16,16 @@ extends VBoxContainer
 @onready var status_label: Label = %StatusLabel
 @onready var empty_state: CenterContainer = %EmptyState
 @onready var asset_grid: GridContainer = %AssetGrid
+@onready var asset_list: VBoxContainer = %AssetList
+@onready var grid_scroll: ScrollContainer = $ContentStack/ScrollContainer
+@onready var list_scroll: ScrollContainer = $ContentStack/ListScrollContainer
 
 var _current_folder: String = ""
 var _current_assets: Array[AssetMeta] = []
 var _selected_assets: Array[AssetMeta] = []
 var _search_timer: Timer
+var _current_type_filter: String = "All Types"
+var _view_mode: String = "grid"
 
 
 func _ready() -> void:
@@ -24,6 +35,10 @@ func _ready() -> void:
 	EventBus.folder_selected.connect(_on_folder_selected)
 	EventBus.thumbnail_ready.connect(_on_thumbnail_ready)
 	EventBus.tag_filter_changed.connect(_on_tag_filter_changed)
+	EventBus.refresh_requested.connect(_on_refresh_requested)
+	EventBus.select_all_requested.connect(_on_select_all_requested)
+	EventBus.deselect_all_requested.connect(_on_deselect_all_requested)
+	EventBus.view_mode_changed.connect(_on_view_mode_changed)
 
 
 func _setup_toolbar() -> void:
@@ -105,15 +120,24 @@ func _scan_folder(path: String) -> void:
 
 func _display_assets(assets: Array[AssetMeta]) -> void:
 	_clear_grid()
+	_clear_list()
 
 	# Show/hide empty state
 	var show_empty := assets.is_empty() and _current_folder.is_empty()
 	empty_state.visible = show_empty
-	asset_grid.get_parent().visible = not show_empty
 
-	for asset in assets:
-		var item := _create_grid_item(asset)
-		asset_grid.add_child(item)
+	# Show correct view container
+	grid_scroll.visible = not show_empty and _view_mode == "grid"
+	list_scroll.visible = not show_empty and _view_mode == "list"
+
+	if _view_mode == "grid":
+		for asset in assets:
+			var item := _create_grid_item(asset)
+			asset_grid.add_child(item)
+	else:
+		for asset in assets:
+			var item := _create_list_item(asset)
+			asset_list.add_child(item)
 
 	status_label.text = "%d items" % assets.size()
 
@@ -148,6 +172,51 @@ func _create_grid_item(asset: AssetMeta) -> Control:
 	label.custom_minimum_size = Vector2(100, 0)
 	item.add_child(label)
 
+	# Store asset reference on item for select all
+	item.set_meta("asset", asset)
+
+	# Make clickable
+	item.gui_input.connect(_on_grid_item_input.bind(asset, item))
+
+	return item
+
+
+func _create_list_item(asset: AssetMeta) -> Control:
+	var item := HBoxContainer.new()
+	item.custom_minimum_size = Vector2(0, 32)
+
+	# Small thumbnail
+	var texture_rect := TextureRect.new()
+	texture_rect.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	texture_rect.custom_minimum_size = Vector2(32, 32)
+	texture_rect.texture = ThumbnailCache.get_thumbnail(asset)
+	texture_rect.set_meta("asset", asset)
+	item.add_child(texture_rect)
+
+	# Spacer
+	var spacer := Control.new()
+	spacer.custom_minimum_size = Vector2(8, 0)
+	item.add_child(spacer)
+
+	# Filename
+	var name_label := Label.new()
+	name_label.text = asset.get_filename()
+	name_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	name_label.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
+	item.add_child(name_label)
+
+	# Type label
+	var ext := asset.get_extension().to_upper()
+	var type_label := Label.new()
+	type_label.text = ext if not ext.is_empty() else "FILE"
+	type_label.custom_minimum_size = Vector2(60, 0)
+	type_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	type_label.add_theme_color_override("font_color", Color(0.6, 0.6, 0.6))
+	item.add_child(type_label)
+
+	# Store asset reference on item for select all
+	item.set_meta("asset", asset)
+
 	# Make clickable
 	item.gui_input.connect(_on_grid_item_input.bind(asset, item))
 
@@ -157,13 +226,21 @@ func _create_grid_item(asset: AssetMeta) -> Control:
 func _clear_grid() -> void:
 	for child in asset_grid.get_children():
 		child.queue_free()
-	_current_assets.clear()
-	_selected_assets.clear()
+
+
+func _clear_list() -> void:
+	for child in asset_list.get_children():
+		child.queue_free()
+
+
+func _get_current_container() -> Container:
+	return asset_list if _view_mode == "list" else asset_grid
 
 
 func _select_asset(asset: AssetMeta, item: Control) -> void:
-	# Clear previous selection
-	for child in asset_grid.get_children():
+	# Clear previous selection in current container
+	var container := _get_current_container()
+	for child in container.get_children():
 		if child.has_meta("selected") and child.get_meta("selected"):
 			child.modulate = Color.WHITE
 			child.set_meta("selected", false)
@@ -220,9 +297,11 @@ func _on_sort_changed(index: int) -> void:
 		EventBus.sort_changed.emit(fields[index], true)
 
 
-func _on_filter_changed(_index: int) -> void:
-	# TODO: Implement type filtering
-	pass
+func _on_filter_changed(index: int) -> void:
+	var types := ["All Types", "Images", "Audio", "3D Models"]
+	if index >= 0 and index < types.size():
+		_current_type_filter = types[index]
+		_apply_filters()
 
 
 func _on_search_text_changed(_text: String) -> void:
@@ -230,26 +309,72 @@ func _on_search_text_changed(_text: String) -> void:
 
 
 func _on_search_timeout() -> void:
-	var query := search_box.text
-	EventBus.search_changed.emit(query)
+	EventBus.search_changed.emit(search_box.text)
+	_apply_filters()
 
-	if query.is_empty():
-		_display_assets(_current_assets)
-	else:
-		var filtered := _current_assets.filter(
+
+func _apply_filters() -> void:
+	var filtered := _current_assets.duplicate()
+
+	# Apply type filter
+	if _current_type_filter != "All Types":
+		var valid_exts: Array = TYPE_EXTENSIONS.get(_current_type_filter, [])
+		filtered = filtered.filter(
 			func(a: AssetMeta) -> bool:
-				return a.get_filename().to_lower().contains(query.to_lower())
+				var ext := a.file_path.get_extension().to_lower()
+				return ext in valid_exts
 		)
-		_display_assets(filtered)
+
+	# Apply search filter
+	var query := search_box.text.strip_edges().to_lower()
+	if not query.is_empty():
+		filtered = filtered.filter(
+			func(a: AssetMeta) -> bool:
+				return a.get_filename().to_lower().contains(query)
+		)
+
+	_display_assets(filtered)
 
 
 func _on_tag_filter_changed(tags: Array) -> void:
 	if tags.is_empty():
-		_display_assets(_current_assets)
+		_apply_filters()
 		return
 
-	# Filter by tags
+	# Filter by multiple tags (AND logic)
 	if ProjectManager.current_project:
-		var tag: Tag = tags[0]
-		var filtered := AssetMeta.with_tag(ProjectManager.current_project.id, tag.id)
+		var tag_ids: Array[int] = []
+		for tag in tags:
+			tag_ids.append(tag.id)
+		var filtered := AssetMeta.with_all_tags(ProjectManager.current_project.id, tag_ids)
 		_display_assets(filtered)
+
+
+func _on_refresh_requested() -> void:
+	if not _current_folder.is_empty():
+		load_folder(_current_folder)
+
+
+func _on_select_all_requested() -> void:
+	_selected_assets.clear()
+	var container := _get_current_container()
+	for child in container.get_children():
+		if child.has_meta("asset"):
+			child.modulate = Color(0.7, 0.85, 1.0)
+			child.set_meta("selected", true)
+			_selected_assets.append(child.get_meta("asset"))
+	EventBus.assets_selected.emit(_selected_assets)
+
+
+func _on_deselect_all_requested() -> void:
+	var container := _get_current_container()
+	for child in container.get_children():
+		child.modulate = Color.WHITE
+		child.set_meta("selected", false)
+	_selected_assets.clear()
+	EventBus.selection_cleared.emit()
+
+
+func _on_view_mode_changed(mode: String) -> void:
+	_view_mode = mode
+	_apply_filters()

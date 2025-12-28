@@ -117,9 +117,9 @@ func _on_file_menu_pressed(id: int) -> void:
 func _on_edit_menu_pressed(id: int) -> void:
 	match id:
 		EditMenu.SELECT_ALL:
-			EventBus.selection_cleared.emit()  # TODO: Implement select all
+			EventBus.select_all_requested.emit()
 		EditMenu.DESELECT_ALL:
-			EventBus.selection_cleared.emit()
+			EventBus.deselect_all_requested.emit()
 		EditMenu.DELETE_SELECTED:
 			pass  # TODO: Implement delete selected
 
@@ -137,13 +137,13 @@ func _on_view_menu_pressed(id: int) -> void:
 		ViewMenu.SHOW_PREVIEW:
 			var checked := not view_menu.is_item_checked(view_menu.get_item_index(ViewMenu.SHOW_PREVIEW))
 			view_menu.set_item_checked(view_menu.get_item_index(ViewMenu.SHOW_PREVIEW), checked)
-			# TODO: Toggle preview panel visibility
+			EventBus.panel_visibility_changed.emit("preview", checked)
 		ViewMenu.SHOW_NAVIGATION:
 			var checked := not view_menu.is_item_checked(view_menu.get_item_index(ViewMenu.SHOW_NAVIGATION))
 			view_menu.set_item_checked(view_menu.get_item_index(ViewMenu.SHOW_NAVIGATION), checked)
-			# TODO: Toggle navigation panel visibility
+			EventBus.panel_visibility_changed.emit("navigation", checked)
 		ViewMenu.REFRESH:
-			pass  # TODO: Implement refresh
+			EventBus.refresh_requested.emit()
 
 
 func _on_project_menu_pressed(id: int) -> void:
@@ -193,8 +193,9 @@ func _show_add_folder_dialog() -> void:
 
 
 func _show_settings_dialog() -> void:
-	# TODO: Implement settings dialog
-	print("Settings dialog not implemented yet")
+	var dialog := preload("res://src/ui/dialogs/settings_dialog.tscn").instantiate()
+	get_tree().root.add_child(dialog)
+	dialog.popup_centered()
 
 
 func _show_rename_project_dialog() -> void:

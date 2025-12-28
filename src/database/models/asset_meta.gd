@@ -234,6 +234,34 @@ static func with_tag(project_id: int, tag_id: int) -> Array[AssetMeta]:
 	return assets
 
 
+static func with_all_tags(project_id: int, tag_ids: Array) -> Array[AssetMeta]:
+	if tag_ids.is_empty():
+		return []
+
+	# Build placeholders for IN clause
+	var placeholders: Array[String] = []
+	for _i in range(tag_ids.size()):
+		placeholders.append("?")
+
+	var params: Array = [project_id]
+	params.append_array(tag_ids)
+	params.append(tag_ids.size())
+
+	var rows := Database.query(
+		"""SELECT am.* FROM asset_meta am
+		INNER JOIN asset_tags at ON am.id = at.asset_id
+		WHERE am.project_id = ? AND at.tag_id IN (%s)
+		GROUP BY am.id
+		HAVING COUNT(DISTINCT at.tag_id) = ?
+		ORDER BY am.file_path""" % ",".join(placeholders),
+		params
+	)
+	var assets: Array[AssetMeta] = []
+	for row in rows:
+		assets.append(from_row(row))
+	return assets
+
+
 static func search(project_id: int, query: String) -> Array[AssetMeta]:
 	var pattern := "%" + query + "%"
 	var rows := Database.query(
