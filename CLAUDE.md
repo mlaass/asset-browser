@@ -84,3 +84,52 @@ godot45 --path . -- --screenshot
 This launches the app, takes a timestamped screenshot to `screenshots/screenshot_YYYYMMDD_HHMMSS.png`, and exits automatically. Then read the latest screenshot to visually inspect the layout, critique spacing/alignment/sizing, make adjustments, and repeat.
 
 Manual screenshots can also be taken by pressing **F12** while the app is running.
+
+## Testing with GUT
+
+This project uses [GUT](https://github.com/bitwes/Gut) (Godot Unit Test) for testing.
+
+### Running Tests
+
+```bash
+godot45 --headless -s addons/gut/gut_cmdln.gd -gdir=tests
+```
+
+### Test File Structure
+
+- Tests live in `tests/` directory
+- Test files must be named `test_*.gd`
+- Test functions must be named `test_*`
+
+### Writing Tests
+
+```gdscript
+extends GutTest
+
+func before_each():
+    # Setup before each test
+    pass
+
+func after_each():
+    # Cleanup after each test
+    pass
+
+func test_example():
+    var result := 1 + 1
+    assert_eq(result, 2, "Math should work")
+
+func test_with_signals():
+    var obj := MyClass.new()
+    watch_signals(obj)
+    obj.do_something()
+    assert_signal_emitted(obj, "my_signal")
+```
+
+### Common Assertions
+
+- `assert_eq(got, expected, text)` - Equality
+- `assert_true(condition, text)` - Boolean true
+- `assert_false(condition, text)` - Boolean false
+- `assert_null(value, text)` - Is null
+- `assert_not_null(value, text)` - Is not null
+- `assert_signal_emitted(obj, signal_name)` - Signal was emitted

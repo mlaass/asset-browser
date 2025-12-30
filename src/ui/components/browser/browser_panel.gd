@@ -97,25 +97,37 @@ func _scan_folder(path: String) -> void:
 		status_label.text = "Cannot open folder"
 		return
 
-	var files: Array[String] = []
+	var items: Array[Dictionary] = []  # {path, is_dir}
 	dir.list_dir_begin()
 	var file_name := dir.get_next()
 	while file_name != "":
-		if not dir.current_is_dir() and AssetRegistry.is_supported(file_name):
-			files.append(path.path_join(file_name))
+		if not file_name.begins_with("."):  # Skip hidden files
+			var full_path := path.path_join(file_name)
+			if dir.current_is_dir():
+				items.append({"path": full_path, "is_dir": true})
+			elif AssetRegistry.is_supported(file_name):
+				items.append({"path": full_path, "is_dir": false})
 		file_name = dir.get_next()
 	dir.list_dir_end()
 
-	files.sort()
+	# Sort: folders first, then files alphabetically
+	items.sort_custom(_sort_folder_items)
 
 	# Create temporary AssetMeta objects for display
 	_current_assets.clear()
-	for file_path in files:
+	for item in items:
 		var asset := AssetMeta.new()
-		asset.file_path = file_path
+		asset.file_path = item["path"]
+		asset.set_meta("is_dir", item["is_dir"])
 		_current_assets.append(asset)
 
 	_display_assets(_current_assets)
+
+
+func _sort_folder_items(a: Dictionary, b: Dictionary) -> bool:
+	if a["is_dir"] != b["is_dir"]:
+		return a["is_dir"]  # Folders first
+	return a["path"].get_file().to_lower() < b["path"].get_file().to_lower()
 
 
 func _display_assets(assets: Array[AssetMeta]) -> void:
@@ -141,25 +153,35 @@ func _display_assets(assets: Array[AssetMeta]) -> void:
 
 	status_label.text = "%d items" % assets.size()
 
+	# Queue thumbnail loading after items are visible (deferred to not block UI)
+	call_deferred("_queue_thumbnails")
+
 
 func _create_grid_item(asset: AssetMeta) -> Control:
 	var item := VBoxContainer.new()
 	item.custom_minimum_size = Vector2(120, 140)
+	item.mouse_filter = Control.MOUSE_FILTER_STOP
+
+	var is_dir: bool = asset.has_meta("is_dir") and asset.get_meta("is_dir")
 
 	# Thumbnail container
 	var thumb_container := PanelContainer.new()
 	thumb_container.custom_minimum_size = Vector2(100, 100)
+	thumb_container.mouse_filter = Control.MOUSE_FILTER_PASS
 
 	var texture_rect := TextureRect.new()
 	texture_rect.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 	texture_rect.custom_minimum_size = Vector2(100, 100)
+	texture_rect.mouse_filter = Control.MOUSE_FILTER_PASS
 
-	# Get thumbnail
-	var thumbnail := ThumbnailCache.get_thumbnail(asset)
-	texture_rect.texture = thumbnail
-
-	# Store asset reference
-	texture_rect.set_meta("asset", asset)
+	if is_dir:
+		# Use folder icon for directories
+		texture_rect.texture = _get_folder_icon()
+	else:
+		# Use placeholder immediately - thumbnails load asynchronously
+		texture_rect.texture = ThumbnailCache.get_placeholder()
+		# Store asset reference for later thumbnail update
+		texture_rect.set_meta("asset", asset)
 
 	thumb_container.add_child(texture_rect)
 	item.add_child(thumb_container)
@@ -170,10 +192,12 @@ func _create_grid_item(asset: AssetMeta) -> Control:
 	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	label.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
 	label.custom_minimum_size = Vector2(100, 0)
+	label.mouse_filter = Control.MOUSE_FILTER_PASS
 	item.add_child(label)
 
 	# Store asset reference on item for select all
 	item.set_meta("asset", asset)
+	item.set_meta("is_dir", is_dir)
 
 	# Make clickable
 	item.gui_input.connect(_on_grid_item_input.bind(asset, item))
@@ -185,12 +209,17 @@ func _create_list_item(asset: AssetMeta) -> Control:
 	var item := HBoxContainer.new()
 	item.custom_minimum_size = Vector2(0, 32)
 
-	# Small thumbnail
+	var is_dir: bool = asset.has_meta("is_dir") and asset.get_meta("is_dir")
+
+	# Small thumbnail - use placeholder or folder icon
 	var texture_rect := TextureRect.new()
 	texture_rect.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 	texture_rect.custom_minimum_size = Vector2(32, 32)
-	texture_rect.texture = ThumbnailCache.get_thumbnail(asset)
-	texture_rect.set_meta("asset", asset)
+	if is_dir:
+		texture_rect.texture = _get_folder_icon()
+	else:
+		texture_rect.texture = ThumbnailCache.get_placeholder()
+		texture_rect.set_meta("asset", asset)
 	item.add_child(texture_rect)
 
 	# Spacer
@@ -206,9 +235,12 @@ func _create_list_item(asset: AssetMeta) -> Control:
 	item.add_child(name_label)
 
 	# Type label
-	var ext := asset.get_extension().to_upper()
 	var type_label := Label.new()
-	type_label.text = ext if not ext.is_empty() else "FILE"
+	if is_dir:
+		type_label.text = "Folder"
+	else:
+		var ext := asset.get_extension().to_upper()
+		type_label.text = ext if not ext.is_empty() else "FILE"
 	type_label.custom_minimum_size = Vector2(60, 0)
 	type_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 	type_label.add_theme_color_override("font_color", Color(0.6, 0.6, 0.6))
@@ -216,11 +248,20 @@ func _create_list_item(asset: AssetMeta) -> Control:
 
 	# Store asset reference on item for select all
 	item.set_meta("asset", asset)
+	item.set_meta("is_dir", is_dir)
 
 	# Make clickable
 	item.gui_input.connect(_on_grid_item_input.bind(asset, item))
 
 	return item
+
+
+var _folder_icon: Texture2D = null
+
+func _get_folder_icon() -> Texture2D:
+	if _folder_icon == null:
+		_folder_icon = load("res://assets/icons/folder.png")
+	return _folder_icon if _folder_icon else ThumbnailCache.get_placeholder()
 
 
 func _clear_grid() -> void:
@@ -263,7 +304,11 @@ func _on_folder_selected(path: String) -> void:
 func _on_grid_item_input(event: InputEvent, asset: AssetMeta, item: Control) -> void:
 	if event is InputEventMouseButton:
 		if event.button_index == MOUSE_BUTTON_LEFT and event.pressed:
-			_select_asset(asset, item)
+			# Navigate into folders on click
+			if item.has_meta("is_dir") and item.get_meta("is_dir"):
+				load_folder(asset.file_path)
+			else:
+				_select_asset(asset, item)
 
 
 func _on_thumbnail_ready(asset_id: int, texture: Texture2D) -> void:
@@ -378,3 +423,34 @@ func _on_deselect_all_requested() -> void:
 func _on_view_mode_changed(mode: String) -> void:
 	_view_mode = mode
 	_apply_filters()
+
+
+func _queue_thumbnails() -> void:
+	var container := _get_current_container()
+	for child in container.get_children():
+		# Skip folders - they use a static icon
+		if child.has_meta("is_dir") and child.get_meta("is_dir"):
+			continue
+		if child.has_meta("asset"):
+			var asset: AssetMeta = child.get_meta("asset")
+			# Use async loading - callback will update the texture
+			ThumbnailCache.get_thumbnail_async(asset, _on_item_thumbnail_ready.bind(child))
+
+
+func _on_item_thumbnail_ready(texture: Texture2D, item: Control) -> void:
+	if not is_instance_valid(item):
+		return
+
+	# Find the TextureRect in the item (first child for grid, direct child for list)
+	var texture_rect: TextureRect = null
+	if _view_mode == "grid":
+		# Grid: item > PanelContainer > TextureRect
+		var thumb_container := item.get_child(0) if item.get_child_count() > 0 else null
+		if thumb_container and thumb_container.get_child_count() > 0:
+			texture_rect = thumb_container.get_child(0) as TextureRect
+	else:
+		# List: item > TextureRect (first child)
+		texture_rect = item.get_child(0) as TextureRect if item.get_child_count() > 0 else null
+
+	if texture_rect:
+		texture_rect.texture = texture

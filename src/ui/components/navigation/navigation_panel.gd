@@ -21,6 +21,7 @@ func _ready() -> void:
 	add_folder_dialog.dir_selected.connect(_on_folder_selected)
 	add_tag_button.pressed.connect(_on_add_tag_pressed)
 	file_tree.item_activated.connect(_on_file_tree_activated)
+	file_tree.item_collapsed.connect(_on_file_tree_item_collapsed)
 
 	EventBus.project_changed.connect(_on_project_changed)
 	EventBus.project_created.connect(_on_project_list_changed)
@@ -83,6 +84,7 @@ func _add_tree_folder(parent: TreeItem, path: String, display_name: String = "")
 		var placeholder := file_tree.create_item(item)
 		placeholder.set_text(0, "Loading...")
 		placeholder.set_metadata(0, "__placeholder__")
+		item.collapsed = true  # Start collapsed
 
 	return item
 
@@ -252,14 +254,15 @@ func _on_file_tree_activated() -> void:
 	if path == "__placeholder__":
 		return
 
-	# Load children if collapsed
-	if selected.collapsed:
-		_load_tree_children(selected)
-		selected.collapsed = false
-	else:
-		selected.collapsed = true
-
 	EventBus.folder_selected.emit(path)
+
+
+func _on_file_tree_item_collapsed(item: TreeItem) -> void:
+	# item_collapsed fires when collapsed state CHANGES
+	# If item is now NOT collapsed (i.e., being expanded), load children
+	# Use call_deferred because Tree is blocked during this signal
+	if not item.collapsed:
+		call_deferred("_load_tree_children", item)
 
 
 func _on_project_changed(_project) -> void:
